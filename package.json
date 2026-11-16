@@ -1,6 +1,6 @@
 {
   "name": "json-write-path",
-  "version": "1.4.1",
+  "version": "1.6.1",
   "description": "Focused table specification builder with configurable rows and cells",
   "type": "module",
   "main": "src/index.js",
@@ -12,14 +12,10 @@
     "README.md"
   ],
   "scripts": {
-    "test": "node test/v24/index.js",
-    "dev": "vite",
-    "build": "vite build"
+    "build": "npx @keshavsoft/build-cli"
   },
   "dependencies": {
-    "json-transformer-funcs": "^1.24.8"
-  },
-  "devDependencies": {
-    "vite": "^8.3.4"
+    "json-transformer-funcs": "^1.24.8",
+    "jsonpathly": "^4.0.0"
   }
 }
