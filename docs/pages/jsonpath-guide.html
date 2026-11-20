@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSONPath Locator Guide | json-write-path</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        :root {
+            --font-main: 'Plus Jakarta Sans', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --primary: #4f46e5;
+            --text-title: #0f172a;
+            --text-body: #334155;
+            --border: #e2e8f0;
+        }
+
+        body {
+            background-color: #ffffff;
+            color: var(--text-body);
+            font-family: var(--font-main);
+            line-height: 1.65;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 40%),
+                radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 28px 28px;
+        }
+
+        .spotlight-follower {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .page-header {
+            padding: 4.5rem 0 3rem;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .guide-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.25rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            transition: all 0.25s ease;
+        }
+
+        .guide-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px -10px rgba(79, 70, 229, 0.12);
+            border-color: #cbd5e1;
+        }
+
+        .code-snippet {
+            background: #0f172a;
+            color: #f8fafc;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.88rem;
+            overflow-x: auto;
+        }
+
+        footer {
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 4rem 0 2rem;
+            margin-top: 5rem;
+        }
+        footer a { color: #cbd5e1; text-decoration: none; }
+        footer a:hover { color: #ffffff; }
+    </style>
+</head>
+
+<body>
+    <div class="spotlight-follower" id="spotlight"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="../index.html">
+                <i class="bi bi-diagram-3-fill text-primary fs-3"></i>
+                <span class="text-dark fw-bold">json-write-path</span>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1">v6.0</span>
+            </a>
+            <div class="ms-auto d-flex align-items-center gap-3">
+                <a class="nav-link fw-semibold text-secondary" href="../index.html">Home</a>
+                <a class="nav-link fw-semibold text-secondary" href="./the-story.html">The Story</a>
+                <a class="nav-link fw-semibold text-secondary" href="./architecture.html">Architecture</a>
+                <a class="nav-link fw-semibold text-secondary" href="./actions.html">Actions</a>
+                <a class="nav-link fw-semibold active text-primary" href="./jsonpath-guide.html">JSONPath Guide</a>
+                <a class="nav-link fw-semibold text-secondary" href="./api-guide.html">API Guide</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="page-header">
+        <div class="container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a href="../index.html" class="text-decoration-none">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">JSONPath Guide</li>
+                </ol>
+            </nav>
+            <h1 class="fw-bold text-dark mb-2">JSONPath Locator Guide</h1>
+            <p class="lead text-muted mb-0">Targeting nodes using jsonpathly queries with strict singularity guarantees.</p>
+        </div>
+    </header>
+
+    <main class="container py-5" style="max-width: 900px;">
+        <div class="guide-card">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="p-2 bg-info-subtle rounded-3 text-info fs-4">
+                    <i class="bi bi-search"></i>
+                </div>
+                <h3 class="fw-bold text-dark mb-0">High-Performance Destination Locators</h3>
+            </div>
+            <p>
+                In <strong>V6</strong>, <code>path.jsonPath</code> is evaluated using <code>jsonpathly</code>, providing powerful query expressions across nested object graphs:
+            </p>
+            <div class="code-snippet mb-3">
+<pre class="m-0 text-white">{
+  "fileName": "base",
+  "jsonPath": "$..*[?@.attributes['data-role'] == 'table-colgroup']",
+  "filePath": ["children"],
+  "action": "push"
+}</pre>
+            </div>
+        </div>
+
+        <div class="guide-card border-start border-4 border-danger">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="p-2 bg-danger-subtle rounded-3 text-danger fs-4">
+                    <i class="bi bi-shield-fill-exclamation"></i>
+                </div>
+                <h3 class="fw-bold text-dark mb-0">The Single-Node Invariant Rule</h3>
+            </div>
+            <p>
+                To eliminate accidental multi-node mutations or silent write failures, <code>resolveParent</code> enforces that any <code>jsonPath</code> query <strong>must match exactly one node</strong> in the target tree:
+            </p>
+            <div class="code-snippet mb-3">
+<pre class="m-0 text-warning">// Zero matches:
+throw new Error(`Destination JSONPath matched no nodes: ${path.jsonPath}`);
+
+// Multiple matches:
+throw new Error(
+    `Destination JSONPath must identify exactly one node; matched ${matches.length}: ${path.jsonPath}`
+);</pre>
+            </div>
+        </div>
+
+        <div class="guide-card">
+            <h3 class="fw-bold text-dark mb-3"><i class="bi bi-arrow-left-right text-primary me-2"></i>Migration from Legacy dataRole</h3>
+            <p class="text-muted small">
+                Legacy instructions that used <code>dataRole</code> can seamlessly transition to <code>jsonPath</code> queries:
+            </p>
+            <div class="table-responsive">
+                <table class="table table-bordered mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Legacy dataRole (v1 - v4)</th>
+                            <th>Modern JSONPathly (v5 - v6)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-monospace text-muted">"dataRole": "table-header"</td>
+                            <td class="font-monospace text-success">"jsonPath": "$..*[?@.attributes['data-role'] == 'table-header']"</td>
+                        </tr>
+                        <tr>
+                            <td class="font-monospace text-muted">"dataRole": "table-body"</td>
+                            <td class="font-monospace text-success">"jsonPath": "$..*[?@.attributes['data-role'] == 'table-body']"</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between pt-4 border-top">
+            <a href="./actions.html" class="btn btn-outline-secondary rounded-pill px-4">← Actions</a>
+            <a href="./api-guide.html" class="btn btn-primary rounded-pill px-4">API Guide →</a>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container text-center">
+            <p class="text-muted small mb-0">json-write-path &bull; MIT License &bull; Maintained by KeshavSoft</p>
+        </div>
+    </footer>
+
+    <script>
+        const spotlight = document.getElementById('spotlight');
+        window.addEventListener('mousemove', (e) => {
+            spotlight.style.left = e.clientX + 'px';
+            spotlight.style.top = e.clientY + 'px';
+        });
+    </script>
+</body>
+
+</html>

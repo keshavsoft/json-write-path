@@ -1,211 +1,176 @@
-# json-renderers-build-table
+# json-write-path
 
-> Build a complete HTML table JSON specification from columns + data — declaratively.
+[![npm version](https://img.shields.io/npm/v/json-write-path.svg?style=flat-square)](https://www.npmjs.com/package/json-write-path)
+[![npm downloads](https://img.shields.io/npm/dm/json-write-path.svg?style=flat-square)](https://www.npmjs.com/package/json-write-path)
+[![license](https://img.shields.io/npm/l/json-write-path.svg?style=flat-square)](https://github.com/keshavsoft/json-write-path)
+[![Documentation](https://img.shields.io/badge/docs-live-brightgreen.svg?style=flat-square)](https://keshavsoft.github.io/json-write-path/)
 
----
-
-## Why this exists
-
-Building a `<table>` from raw data is repetitive work that quickly becomes messy:
-
-- You scatter `createElement` calls across your codebase
-- Adding a column means touching the header, the body cells, the footer, and the colgroup
-- Swapping a cell style for one column (e.g. a badge instead of plain text) means rewriting imperative DOM code
-- Testing is hard because the logic is entangled with the DOM
-
-This library inverts that. **You describe what the table should look like in JSON.** The library stamps it out.
-
-The result is a plain JSON object — a DOM specification — that you hand to a renderer like [`@keshavsoft/json-to-tag`](https://keshavsoft.github.io/json-to-tag/dist/v9/min.js). The renderer turns it into real DOM elements. The builder never touches the DOM.
+> Declarative, in-memory JSON specification tree mutator for multi-tree registries. Locates target nodes via JSONPath or data-role anchors, resolves property paths, and applies deterministic mutation actions.
 
 ---
 
-## The core idea: declarative instructions over a shared registry
+## 🔗 Official Links
 
-Every build runs through three layers:
-
-```
-1. Registry      holds { data, base, spec }
-                   data  = your columns + rows
-                   base  = the empty table skeleton (colgroup, thead, tbody, tfoot)
-                   spec  = named cell/row templates
-
-2. Instructions  a JSON array that says:
-                   "read THIS source path,
-                    apply THIS template,
-                    write the result to THIS destination"
-
-3. writePath     navigates the base tree by data-role anchor
-                 and writes using a named action
-                 (set / push / unshift / pushToRows / ...)
-```
-
-Because the instructions are JSON, you can read a build sequence without tracing any JavaScript. Each instruction has a `narration` field that explains itself in plain English.
+- 🚀 **Live Documentation & Interactive Playground**: [https://keshavsoft.github.io/json-write-path/](https://keshavsoft.github.io/json-write-path/)
+- 📦 **NPM Package**: [https://www.npmjs.com/package/json-write-path](https://www.npmjs.com/package/json-write-path)
+- 💻 **GitHub Repository**: [https://github.com/keshavsoft/json-write-path](https://github.com/keshavsoft/json-write-path)
 
 ---
 
-## How a table gets built (v18 `simple`)
-
-```
-columns.json     batches.json
-      \               /
-       simple({ columns, data })
-              |
-              |  registry = { data, base, spec }
-              |
-              +-- single instructions (fromCollection)
-              |     colgroup children   (one <col> per column)
-              |     thead > tr children (one <th> per column)
-              |
-              +-- double instructions (twoDimensional)
-                    tbody children      (one <tr> per row, one <td> per column)
-              |
-              +-- returns base (fully populated JSON tree)
-```
-
-The returned `base` is a plain JavaScript object:
-
-```json
-{
-  "tagName": "table",
-  "attributes": { "class": "table table-hover ..." },
-  "children": [
-    { "tagName": "colgroup", "children": [ "..." ] },
-    { "tagName": "thead",    "children": [ { "tagName": "tr", "children": [ "..." ] } ] },
-    { "tagName": "tbody",    "children": [ "..." ] },
-    { "tagName": "tfoot",    "children": [ "..." ] }
-  ]
-}
-```
-
-Hand that to any spec-to-DOM renderer and you get a real table element.
-
----
-
-## Quick start
-
-```js
-import { simple } from "./docs/dist/v18/min.js";
-
-const columns = [
-    {
-        columnName: "itemName",
-        width: "300px",
-        template: { body: { tr: "buildBodyTr", cell: "buildBodyCell" } }
-    },
-    {
-        columnName: "baseUnit",
-        width: "200px",
-        template: { body: { tr: "buildBodyTr", cell: "buildBodyCell" } }
-    },
-    {
-        columnName: "batches",
-        width: "100px",
-        template: { body: { tr: "buildBodyTr", cell: "buttonCell" } }
-    }
-];
-
-const data = [
-    { itemName: "0.11-25", baseUnit: "kgs", batches: 1 },
-    { itemName: "0.11-30", baseUnit: "kgs", batches: 0 }
-];
-
-const spec = simple({ columns, data });
-
-// spec is a plain JSON tree — pass it to your DOM renderer
-const element = window.ks.jsonToTag.buildSpecElement(spec);
-document.getElementById("container").appendChild(element);
-```
-
----
-
-## What each column config means
-
-| Field | Purpose |
-|---|---|
-| `columnName` | Maps to the data property on each row object |
-| `width` | Written into the `<col>` element in the colgroup |
-| `template.body.tr` | Key into `spec.json` — which `<tr>` template to use for body rows |
-| `template.body.cell` | Key into `spec.json` — which `<td>` template to use for this column's cells |
-
-You change the look of a column's cells by pointing `template.body.cell` at a different key in `spec.json`. No JavaScript changes needed.
-
----
-
-## Cell templates (`spec.json`)
-
-Pre-built templates in `src/v18/spec.json`:
-
-| Key | Renders |
-|---|---|
-| `buildBodyCell` | Plain `<td>` with the row value as text |
-| `buttonCell` | `<td>` containing a `<button>` showing the aggregate count |
-| `buildHeader` | `<th>` with uppercase text |
-| `buildColGroup` | `<col>` with a width attribute |
-| `buildFooter` | `<td>` with a text `<input>` for footer rows |
-| `buildOption` | `<option>` element |
-| `buildSelect` | `<select>` container |
-| `buildDataList` | `<datalist>` container |
-
----
-
-## Why columns drive everything
-
-A column definition is the single source of truth for **one vertical slice** of the table:
-
-- its header cell (`buildHeader` template)
-- its width (`buildColGroup` template)
-- its body cell template (`template.body.cell`)
-- its footer cell (if enabled)
-
-Adding a column = adding one object to the columns array.  
-Removing a column = removing it.  
-The instructions loop over columns automatically.  
-There is no imperative "add a th, then add a td, then add a col" sequence to maintain.
-
----
-
-## Build
+## 📦 Installation
 
 ```bash
-npm install
-npm run build
-# output: docs/dist/v18/min.js
+npm install json-write-path
 ```
 
-The Vite config auto-detects the highest `vN` folder under `src/` and builds that version. No config changes needed when a new version is added.
-
----
-
-## Run the sample
+Or via yarn / pnpm:
 
 ```bash
-npx serve
-# open http://localhost:PORT/samples/v18/simpleTable/
+yarn add json-write-path
+# or
+pnpm add json-write-path
 ```
 
 ---
 
-## Project structure
+## 💡 What it does
+
+When assembling complex JSON specifications (such as table specifications, DOM trees, form definitions, or AST nodes), instructions need to read from one source, transform the data, and write the result into a specific location inside a target tree.
+
+`json-write-path` handles the **write** step:
+
+1. **Locates the destination node** inside a shared `registry` (e.g. `{ base, spec, data }`) using **JSONPath** (`jsonpathly`) or legacy `dataRole` anchors (`findByRole`).
+2. **Navigates down through properties** via `filePath` (e.g. `['children']` or `['attributes', 'class']`).
+3. **Applies a deterministic action** (`set`, `push`, `unshift`, `pushToRows`, `unshiftToRows`, `unshiftSerialToRows`).
+4. **Returns the updated registry** for clean chaining.
+
+---
+
+## ⚙️ The 3-Act Execution Pipeline
+
+Every write follows a strictly decoupled 3-act model:
 
 ```
-src/
-  v18/
-    index.js              exports { simple }
-    spec.json             named cell/row templates
-    simple/
-      index.js            the build runner (registry + instructions)
-      base.json           empty table skeleton with data-role anchors
-      instructions/
-        single.json       fromCollection instructions (colgroup, thead)
-        double.json       twoDimensional instruction (tbody)
-      writePath/
-        index.js          tree writer with named actions
-
-samples/
-  v18/
-    simpleTable/          live demo: columns.json + batches.json
-
-docs/
-  dist/
-    v18/min.js            pre-built bundle (committed, served via GitHub Pages)
+Act 1: Resolve        registry + path  ──▶  { parent, key, target }
+                           │
+Act 2: Pick           actions[path.action] || set
+                           │
+Act 3: Write          action(parent, key, value) ──▶ returns registry
 ```
+
+- **Act 1 (`resolveParent`)**: Locates the single destination node and descends down through `filePath` to expose `parent` and `key`.
+- **Act 2 (`pick`)**: Resolves the action function from the action catalog. Defaults safely to `set`.
+- **Act 3 (`write`)**: Mutates `parent[key]` in-place and returns the mutated `registry`.
+
+---
+
+## 🚀 Quick Start
+
+```javascript
+import writePath from "json-write-path";
+
+const registry = {
+  base: {
+    tagName: "table",
+    attributes: { "class": "table" },
+    children: [
+      {
+        tagName: "colgroup",
+        attributes: { "data-role": "table-colgroup" },
+        children: []
+      },
+      {
+        tagName: "tbody",
+        attributes: { "data-role": "table-body" },
+        children: [
+          { tagName: "tr", children: [{ tagName: "td", textContent: "Alice" }] },
+          { tagName: "tr", children: [{ tagName: "td", textContent: "Bob" }] }
+        ]
+      }
+    ]
+  }
+};
+
+// 1. Append a column specification into the colgroup via JSONPath
+writePath(
+  registry,
+  {
+    fileName: "base",
+    jsonPath: "$..*[?@.attributes['data-role'] == 'table-colgroup']",
+    filePath: ["children"],
+    action: "push"
+  },
+  { tagName: "col", attributes: { width: "150px" } }
+);
+
+// 2. Prepend a numbered serial column to every row in tbody
+writePath(
+  registry,
+  {
+    fileName: "base",
+    jsonPath: "$..*[?@.attributes['data-role'] == 'table-body']",
+    filePath: ["children"],
+    action: "unshiftSerialToRows"
+  },
+  { tagName: "td", attributes: { class: "serial-col" } }
+);
+
+console.log(JSON.stringify(registry.base, null, 2));
+```
+
+---
+
+## 📋 Path Descriptor Specification
+
+The `path` parameter passed to `writePath` defines how to find the target and what mutation to execute:
+
+| Field | Type | Required | Description |
+| :--- | :--- | :---: | :--- |
+| `fileName` | `string` | **Yes** | Root property key in `registry` (e.g. `"base"`, `"spec"`). Throws if not found. |
+| `jsonPath` | `string` | **Recommended** | JSONPath expression executed by `jsonpathly`. **Must match exactly one node** in the tree. |
+| `dataRole` | `string` | Optional | Backward-compatibility fallback if `jsonPath` is omitted. Finds node by `data-role` attribute. |
+| `filePath` | `string[]` | **Yes** | Array of keys to descend through. The last item is `key`; preceding items resolve `parent`. |
+| `action` | `string` | Optional | Action name. Defaults to `"set"` if omitted or unknown. |
+
+---
+
+## 🛠️ Built-in Actions
+
+### Basic Actions (`single node`)
+- **`set(parent, key, value)`**: Assigns `parent[key] = value`.
+- **`push(parent, key, value)`**: Normalizes `value` with `toArray` and appends items to `parent[key]`.
+- **`unshift(parent, key, value)`**: Normalizes `value` with `toArray` and prepends items to `parent[key]`.
+
+### Row Actions (`fan-out across rows`)
+- **`pushToRows(parent, key, value)`**: Iterates over each row in `parent[key]`, deep-cloning `value` via `structuredClone`, and appends to `row.children`.
+- **`unshiftToRows(parent, key, value)`**: Deep-clones `value` and prepends to each row's `children`.
+- **`unshiftSerialToRows(parent, key, value)`**: Clones `value`, sets `item.textContent = rowIndex + 1`, and prepends to each row's `children`.
+
+---
+
+## 📚 Complete Documentation
+
+Visit the full documentation portal in the `docs/` folder:
+
+- **[Main Documentation Portal](https://keshavsoft.github.io/json-write-path/)** (`docs/index.html`)
+- **[The Story & Philosophy](https://keshavsoft.github.io/json-write-path/pages/the-story.html)** (`docs/pages/the-story.html`)
+- **[Architecture & Pipeline](https://keshavsoft.github.io/json-write-path/pages/architecture.html)** (`docs/pages/architecture.html`)
+- **[Actions Deep Dive](https://keshavsoft.github.io/json-write-path/pages/actions.html)** (`docs/pages/actions.html`)
+- **[JSONPath Locator Guide](https://keshavsoft.github.io/json-write-path/pages/jsonpath-guide.html)** (`docs/pages/jsonpath-guide.html`)
+- **[API Guide & Reference](https://keshavsoft.github.io/json-write-path/pages/api-guide.html)** (`docs/pages/api-guide.html`)
+
+---
+
+## 🏷️ Version History
+
+- **v6 (Latest)**: Production JSONPathly integration with strict single-match verification, full ESM named and default exports, enhanced debug logging, and updated registry return.
+- **v5**: Introduced `jsonpathly` query-based destination resolution alongside legacy `dataRole`.
+- **v4**: Added optional `showLog` flag for diagnostic console output during path navigation.
+- **v3**: Established the 3-Act write architecture (`resolveParent` &rarr; `pick` &rarr; `write`).
+- **v1 – v2**: Monolithic validation prototypes (archived in `archive/`).
+
+---
+
+## 📄 License
+
+MIT © KeshavSoft
